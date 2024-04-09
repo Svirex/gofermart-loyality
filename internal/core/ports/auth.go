@@ -8,8 +8,9 @@ import (
 )
 
 var ErrUserAlreadyExists = errors.New("user already exists")
-var ErrEmptyPassword = errors.New("empty password")
 var ErrEmptyLogin = errors.New("empty login")
+var ErrEmptyPassword = errors.New("empty password")
+var ErrLowPasswordStrength = errors.New("low password sthrength")
 var ErrUserNotFound = errors.New("user not found")
 
 type AuthService interface {
