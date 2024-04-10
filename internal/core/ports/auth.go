@@ -12,13 +12,14 @@ var ErrEmptyLogin = errors.New("empty login")
 var ErrEmptyPassword = errors.New("empty password")
 var ErrLowPasswordStrength = errors.New("low password sthrength")
 var ErrUserNotFound = errors.New("user not found")
+var ErrPasswordToShort = errors.New("the password is too short")
 
 type AuthService interface {
-	Register(context.Context, *domain.AuthData) error
-	Login(context.Context, *domain.AuthData) (string, error)
+	Register(ctx context.Context, login, password string) (string, error)
+	Login(ctx context.Context, login, password string) (string, error)
 }
 
 type AuthRepository interface {
-	CreateUser(context.Context, *domain.User) (*domain.User, error)
-	GetUserByLogin(context.Context, string) (*domain.User, error)
+	CreateUser(ctx context.Context, user *domain.User) (*domain.User, error)
+	GetUserByLogin(ctx context.Context, login string) (*domain.User, error)
 }
