@@ -13,6 +13,7 @@ var ErrEmptyPassword = errors.New("empty password")
 var ErrLowPasswordStrength = errors.New("low password sthrength")
 var ErrUserNotFound = errors.New("user not found")
 var ErrPasswordToShort = errors.New("the password is too short")
+var ErrInvalidPassword = errors.New("invalid password")
 
 type AuthService interface {
 	Register(ctx context.Context, login, password string) (string, error)

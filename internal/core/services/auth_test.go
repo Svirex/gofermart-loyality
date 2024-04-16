@@ -11,7 +11,7 @@ import (
 
 func TestEmptyLogin(t *testing.T) {
 
-	service, err := services.NewAuthService(nil, 80, 8)
+	service, err := services.NewAuthService(nil, 80, 8, 10)
 	require.NoError(t, err)
 
 	_, err = service.Register(context.Background(), "", "password")
@@ -19,7 +19,7 @@ func TestEmptyLogin(t *testing.T) {
 }
 
 func TestEmptyPassword(t *testing.T) {
-	service, err := services.NewAuthService(nil, 80, 8)
+	service, err := services.NewAuthService(nil, 80, 8, 10)
 	require.NoError(t, err)
 
 	_, err = service.Register(context.Background(), "login", "")
@@ -27,7 +27,7 @@ func TestEmptyPassword(t *testing.T) {
 }
 
 func TestPasswordIsTooShort(t *testing.T) {
-	service, err := services.NewAuthService(nil, 80, 8)
+	service, err := services.NewAuthService(nil, 80, 8, 10)
 	require.NoError(t, err)
 
 	_, err = service.Register(context.Background(), "login", "pass")
@@ -36,7 +36,7 @@ func TestPasswordIsTooShort(t *testing.T) {
 }
 
 func TestLowPasswordStrength(t *testing.T) {
-	service, err := services.NewAuthService(nil, 80, 8)
+	service, err := services.NewAuthService(nil, 80, 8, 10)
 	require.NoError(t, err)
 
 	_, err = service.Register(context.Background(), "login", "password")
