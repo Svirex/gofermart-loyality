@@ -33,6 +33,7 @@ func (r *AuthRepository) CreateUser(ctx context.Context, user *domain.User) (*do
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+			// TODO переделать на просто возврат ошибки. Определение, что делать с этой ошибкой - задача сервиса
 			return nil, fmt.Errorf("%w: auth repository create user, user already exists: %v", ports.ErrUserAlreadyExists, err)
 		}
 		return nil, fmt.Errorf("auth repository create user: %w", err)
@@ -46,6 +47,7 @@ func (r *AuthRepository) GetUserByLogin(ctx context.Context, login string) (*dom
 	err := r.db.QueryRow(ctx, `SELECT id, login, hash FROM users WHERE login=$1`, login).Scan(&user.ID, &user.Login, &user.Hash)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+			// TODO переделать на просто возврат ошибки. Определение, что делать с этой ошибкой - задача сервиса
 			return nil, fmt.Errorf("%w: auth repository, get user by login, user not found: %v", ports.ErrUserNotFound, err)
 		}
 		return nil, fmt.Errorf("auth repository, get user by login: %w", err)
