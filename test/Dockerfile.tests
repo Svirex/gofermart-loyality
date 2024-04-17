@@ -1,0 +1,12 @@
+FROM golang:alpine3.19 AS src
+
+# Install git
+RUN set -ex; \
+    apk update; \
+    apk add --no-cache git
+
+WORKDIR /integration-test
+
+COPY ../ .
+
+CMD CGO_ENABLED=0 go test -tags=integration ./...
