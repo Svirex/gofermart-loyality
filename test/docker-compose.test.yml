@@ -1,0 +1,28 @@
+version: '3'
+
+networks:
+  integration-tests:
+    driver: bridge
+
+services:
+  listd_tests:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.test
+    depends_on:
+      - db
+    networks:
+      - integration-tests
+  db:
+    image: stage.sberosc.sigma.sbrf.ru/docker.io/postgres:16.2-alpine3.19
+    ports:
+      - "5432:5432"
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: testdb
+    restart: on-failure
+    networks:
+      - integration-tests

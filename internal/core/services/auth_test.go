@@ -9,37 +9,54 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func NewAuthService(t *testing.T) *services.AuthService {
+	service, err := services.NewAuthService(nil, 80, 8, 10, "fake_secret")
+	require.NoError(t, err)
+	return service
+}
+
 func TestEmptyLogin(t *testing.T) {
 
-	service, err := services.NewAuthService(nil, 80, 8, 10)
-	require.NoError(t, err)
+	service := NewAuthService(t)
 
-	_, err = service.Register(context.Background(), "", "password")
+	_, err := service.Register(context.Background(), "", "password")
 	require.ErrorIs(t, err, ports.ErrEmptyLogin)
 }
 
 func TestEmptyPassword(t *testing.T) {
-	service, err := services.NewAuthService(nil, 80, 8, 10)
-	require.NoError(t, err)
+	service := NewAuthService(t)
 
-	_, err = service.Register(context.Background(), "login", "")
+	_, err := service.Register(context.Background(), "login", "")
 	require.ErrorIs(t, err, ports.ErrEmptyPassword)
 }
 
 func TestPasswordIsTooShort(t *testing.T) {
-	service, err := services.NewAuthService(nil, 80, 8, 10)
-	require.NoError(t, err)
+	service := NewAuthService(t)
 
-	_, err = service.Register(context.Background(), "login", "pass")
+	_, err := service.Register(context.Background(), "login", "pass")
 	require.ErrorIs(t, err, ports.ErrPasswordToShort)
 
 }
 
 func TestLowPasswordStrength(t *testing.T) {
-	service, err := services.NewAuthService(nil, 80, 8, 10)
-	require.NoError(t, err)
+	service := NewAuthService(t)
 
-	_, err = service.Register(context.Background(), "login", "password")
+	_, err := service.Register(context.Background(), "login", "password")
 	require.ErrorIs(t, err, ports.ErrLowPasswordStrength)
 
+}
+
+func TestEmptyLoginLogin(t *testing.T) {
+
+	service := NewAuthService(t)
+
+	_, err := service.Login(context.Background(), "", "password")
+	require.ErrorIs(t, err, ports.ErrEmptyLogin)
+}
+
+func TestEmptyPasswordLogin(t *testing.T) {
+	service := NewAuthService(t)
+
+	_, err := service.Login(context.Background(), "login", "")
+	require.ErrorIs(t, err, ports.ErrEmptyPassword)
 }
