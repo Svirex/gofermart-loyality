@@ -39,6 +39,10 @@ func (service *CheckAccrualService) generator(orderNum string) {
 	}
 }
 
+func (service *CheckAccrualService) queueUpdater() {
+
+}
+
 func (service *CheckAccrualService) Shutdown() {
 	close(service.stopCh)
 }
