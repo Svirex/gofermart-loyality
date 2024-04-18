@@ -1,21 +1,20 @@
 //go:build integration
 // +build integration
 
-package postgres_test
+package postgres
 
 import (
 	"context"
 	"testing"
 
-	"github.com/Svirex/gofermart-loyality/internal/adapters/postgres"
 	"github.com/Svirex/gofermart-loyality/internal/core/domain"
 	"github.com/Svirex/gofermart-loyality/test/testdb"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func NewAuthRepo() *postgres.AuthRepository {
-	return postgres.NewAuthRepository(testdb.GetPool())
+func NewAuthRepo() *AuthRepository {
+	return NewAuthRepository(testdb.GetPool())
 }
 
 func TestCreateUser(t *testing.T) {
