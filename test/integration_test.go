@@ -1,35 +1,25 @@
 //go:build integration
 // +build integration
 
-package test_test
+package test
 
 import (
-	"log"
+	"os"
 	"testing"
 
 	"github.com/Svirex/gofermart-loyality/test/testdb"
-	"github.com/golang-migrate/migrate"
-	"github.com/golang-migrate/migrate/database/postgres"
-	"github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/golang-migrate/migrate/source/file"
+	"go.uber.org/zap"
 )
 
+var logger *zap.SugaredLogger
+
 func TestMain(m *testing.M) {
-	testdb.Connect()
+	testdb.Init()
 	defer testdb.Close()
 
-	driver, err := postgres.WithInstance(stdlib.OpenDBFromPool(testdb.GetPool()), &postgres.Config{})
-	if err != nil {
-		log.Fatalf("create instance db for migrate: %v", err)
-	}
-	migration, err := migrate.NewWithDatabaseInstance(
-		"file://../migrations", "postgres", driver)
-	if err != nil {
-		log.Fatalf("create migrate: %v", err)
-	}
-	err = migration.Up()
-	if err != nil {
-		log.Fatalf("migration up: %v", err)
-	}
-	m.Run()
-	migration.Down()
+	testdb.MigrateUp()
+	code := m.Run()
+	testdb.MigrateDown()
+	os.Exit(code)
 }

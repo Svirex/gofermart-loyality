@@ -23,6 +23,7 @@ var _ ports.AuthService = (*AuthService)(nil)
 
 func NewAuthService(repo ports.AuthRepository, minPasswordEntropyBits float64, minPasswordLength int, bcryptCost int, jwtSecretKey string) (*AuthService, error) {
 	return &AuthService{
+		// TODO убрать параметры в Config
 		repo:                   repo,
 		minPasswordEntropyBits: minPasswordEntropyBits,
 		minPasswordLength:      minPasswordLength,
@@ -41,6 +42,7 @@ func (s *AuthService) Register(ctx context.Context, login, password string) (str
 	if err := s.validatePasswordSthregth(password); err != nil {
 		return "", fmt.Errorf("auth service register, low password strength: %w", err)
 	}
+	// TODO переделать, чтобы сразу проверять мин и макс длину пароля
 	hash, err := s.hashPassword(password)
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrPasswordTooLong) {

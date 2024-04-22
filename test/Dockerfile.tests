@@ -7,6 +7,4 @@ RUN set -ex; \
 
 WORKDIR /integration-test
 
-COPY ../ .
-
-CMD CGO_ENABLED=0 go test -tags=integration ./...
+CMD go clean -testcache && CGO_ENABLED=0 go test -tags=integration -p 1 ./...

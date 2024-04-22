@@ -1,37 +1,36 @@
-package services_test
+package services
 
 import (
 	"context"
 	"testing"
 
 	"github.com/Svirex/gofermart-loyality/internal/core/ports"
-	"github.com/Svirex/gofermart-loyality/internal/core/services"
 	"github.com/stretchr/testify/require"
 )
 
-func NewAuthService(t *testing.T) *services.AuthService {
-	service, err := services.NewAuthService(nil, 80, 8, 10, "fake_secret")
+func NewAuthTestService(t *testing.T) *AuthService {
+	service, err := NewAuthService(nil, 80, 8, 10, "fake_secret")
 	require.NoError(t, err)
 	return service
 }
 
 func TestEmptyLogin(t *testing.T) {
 
-	service := NewAuthService(t)
+	service := NewAuthTestService(t)
 
 	_, err := service.Register(context.Background(), "", "password")
 	require.ErrorIs(t, err, ports.ErrEmptyLogin)
 }
 
 func TestEmptyPassword(t *testing.T) {
-	service := NewAuthService(t)
+	service := NewAuthTestService(t)
 
 	_, err := service.Register(context.Background(), "login", "")
 	require.ErrorIs(t, err, ports.ErrEmptyPassword)
 }
 
 func TestPasswordIsTooShort(t *testing.T) {
-	service := NewAuthService(t)
+	service := NewAuthTestService(t)
 
 	_, err := service.Register(context.Background(), "login", "pass")
 	require.ErrorIs(t, err, ports.ErrPasswordToShort)
@@ -39,7 +38,7 @@ func TestPasswordIsTooShort(t *testing.T) {
 }
 
 func TestLowPasswordStrength(t *testing.T) {
-	service := NewAuthService(t)
+	service := NewAuthTestService(t)
 
 	_, err := service.Register(context.Background(), "login", "password")
 	require.ErrorIs(t, err, ports.ErrLowPasswordStrength)
@@ -48,14 +47,14 @@ func TestLowPasswordStrength(t *testing.T) {
 
 func TestEmptyLoginLogin(t *testing.T) {
 
-	service := NewAuthService(t)
+	service := NewAuthTestService(t)
 
 	_, err := service.Login(context.Background(), "", "password")
 	require.ErrorIs(t, err, ports.ErrEmptyLogin)
 }
 
 func TestEmptyPasswordLogin(t *testing.T) {
-	service := NewAuthService(t)
+	service := NewAuthTestService(t)
 
 	_, err := service.Login(context.Background(), "login", "")
 	require.ErrorIs(t, err, ports.ErrEmptyPassword)

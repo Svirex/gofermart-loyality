@@ -1,28 +1,34 @@
-version: '3'
-
-networks:
-  integration-tests:
-    driver: bridge
-
 services:
-  listd_tests:
+
+  webapp:
     build:
       context: .
-      dockerfile: ./Dockerfile.test
+      dockerfile: Dockerfile.tests
     depends_on:
       - db
     networks:
       - integration-tests
+    volumes:
+      - type: bind
+        source: ../
+        target: /integration-test
+    environment:
+      # DB_URL: host=localhost port=5432 user=root password=root dbname=testdb sslmode=disable
+      DB_URL: user=root password=root host=db port=5432 dbname=testdb sslmode=disable
   db:
-    image: stage.sberosc.sigma.sbrf.ru/docker.io/postgres:16.2-alpine3.19
+    image: postgres:16.2-alpine3.19
     ports:
-      - "5432:5432"
+      - "54345:5432"
     expose:
       - "5432"
     environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-      POSTGRES_DB: testdb
-    restart: on-failure
+      POSTGRES_USER: "root"
+      POSTGRES_PASSWORD: "root"
+      POSTGRES_DB: "testdb"
+    restart: always
     networks:
       - integration-tests
+
+networks:
+  integration-tests:
+    driver: bridge
