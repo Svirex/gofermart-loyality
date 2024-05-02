@@ -6,8 +6,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/golang-migrate/migrate"
-	"github.com/golang-migrate/migrate/database/postgres"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
@@ -24,6 +25,13 @@ func GetPool() *pgxpool.Pool {
 		log.Fatalf("db not init")
 	}
 	return dbpool
+}
+
+func GetLogger() *zap.SugaredLogger {
+	if logger == nil {
+		log.Fatalf("logger not init")
+	}
+	return logger
 }
 
 func initLogger() {
@@ -91,7 +99,17 @@ func Close() {
 }
 
 func MigrateUp() {
-	err := migration.Up()
+	version, dirty, err := migration.Version()
+	if err != nil && !errors.Is(err, migrate.ErrNilVersion) {
+		logger.Fatalf("migration version error ", "err=", err)
+	}
+	if dirty {
+		err = migration.Force(int(version))
+		if err != nil {
+			logger.Fatalf("migration force error ", "err=", err)
+		}
+	}
+	err = migration.Up()
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		logger.Fatalf("migration up error ", "err=", err)
 	}
@@ -105,7 +123,7 @@ func MigrateDown() {
 }
 
 func Truncate() error {
-	_, err := dbpool.Exec(context.Background(), "TRUNCATE TABLE users RESTART IDENTITY;")
+	_, err := dbpool.Exec(context.Background(), "TRUNCATE TABLE users, orders, balance, withdraws RESTART IDENTITY;")
 	if err != nil {
 		logger.Error("couldn't truncate tables ", err)
 		return err

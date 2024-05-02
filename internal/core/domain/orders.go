@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 type OrderNum string
 
 type Status string
@@ -12,6 +14,8 @@ const (
 )
 
 type Order struct {
-	Number OrderNum
-	Status Status
+	Number     string    `json:"number"`
+	Status     Status    `json:"status"`
+	Accrual    float64   `json:"accrual,omitempty"`
+	UploadedAt time.Time `json:"uploaded_at"`
 }

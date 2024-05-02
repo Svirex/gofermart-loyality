@@ -1,0 +1,10 @@
+CREATE TYPE STATUS AS ENUM ('NEW', 'PROCESSING', 'INVALID', 'PROCESSED');
+
+CREATE TABLE IF NOT EXISTS orders (
+    id SERIAL PRIMARY KEY,
+    uid INT REFERENCES users (id),
+    order_num TEXT UNIQUE,
+    status STATUS DEFAULT 'NEW',
+    accrual NUMERIC(12, 2) DEFAULT 0.00,
+    uploaded_at TIMESTAMP DEFAULT NOW()
+); 

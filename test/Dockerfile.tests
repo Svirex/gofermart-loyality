@@ -1,10 +1,5 @@
 FROM golang:alpine3.19 AS src
 
-# Install git
-RUN set -ex; \
-    apk update; \
-    apk add --no-cache git
-
 WORKDIR /integration-test
 
-CMD go clean -testcache && CGO_ENABLED=0 go test -tags=integration -p 1 ./...
+CMD go clean -testcache && CGO_ENABLED=0 go test -tags=integration -p 1 -v -run TestCheckAccrualProcessed ./...

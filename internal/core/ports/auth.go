@@ -12,7 +12,8 @@ var ErrEmptyLogin = errors.New("empty login")
 var ErrEmptyPassword = errors.New("empty password")
 var ErrLowPasswordStrength = errors.New("low password sthrength")
 var ErrUserNotFound = errors.New("user not found")
-var ErrPasswordToShort = errors.New("the password is too short")
+var ErrPasswordTooShort = errors.New("the password is too short")
+var ErrPasswordTooLong = errors.New("the password is too long")
 var ErrInvalidPassword = errors.New("invalid password")
 
 type AuthService interface {

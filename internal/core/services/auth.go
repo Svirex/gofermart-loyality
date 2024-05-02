@@ -7,7 +7,6 @@ import (
 
 	"github.com/Svirex/gofermart-loyality/internal/core/domain"
 	"github.com/Svirex/gofermart-loyality/internal/core/ports"
-	passwordvalidator "github.com/wagslane/go-password-validator"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -39,14 +38,13 @@ func (s *AuthService) Register(ctx context.Context, login, password string) (str
 	if password == "" {
 		return "", fmt.Errorf("auth service register, empty password: %w", ports.ErrEmptyPassword)
 	}
-	if err := s.validatePasswordSthregth(password); err != nil {
-		return "", fmt.Errorf("auth service register, low password strength: %w", err)
+	if len(password) < s.minPasswordLength {
+		return "", fmt.Errorf("auth service register, check min length: %w", ports.ErrPasswordTooShort)
 	}
-	// TODO переделать, чтобы сразу проверять мин и макс длину пароля
 	hash, err := s.hashPassword(password)
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrPasswordTooLong) {
-			return "", fmt.Errorf("auth service register, password too long: %w", bcrypt.ErrPasswordTooLong)
+			return "", fmt.Errorf("auth service register, password too long: %w", ports.ErrPasswordTooLong)
 		}
 		return "", fmt.Errorf("auth service register, hash password error: %w", err)
 	}
@@ -57,7 +55,7 @@ func (s *AuthService) Register(ctx context.Context, login, password string) (str
 	user, err = s.repo.CreateUser(ctx, user)
 	if err != nil {
 		if errors.Is(err, ports.ErrUserAlreadyExists) {
-			return "", fmt.Errorf("auth service register, user alreadey exists: %w", err)
+			return "", fmt.Errorf("auth service register, user already exists: %w", err)
 		}
 		return "", fmt.Errorf("auth service register, create user: %w", err)
 	}
@@ -97,16 +95,16 @@ func (s *AuthService) Login(ctx context.Context, login, password string) (string
 	return token, nil
 }
 
-func (s *AuthService) validatePasswordSthregth(password string) error {
-	if len(password) < s.minPasswordLength {
-		return fmt.Errorf("validatePasswordSthregth, check length: %w", ports.ErrPasswordToShort)
-	}
-	err := passwordvalidator.Validate(password, s.minPasswordEntropyBits)
-	if err != nil {
-		return fmt.Errorf("%w, validatePasswordSthregth, check password strength: %v", ports.ErrLowPasswordStrength, err)
-	}
-	return nil
-}
+// func (s *AuthService) validatePasswordSthregth(password string) error {
+// 	if len(password) < s.minPasswordLength {
+// 		return fmt.Errorf("validatePasswordSthregth, check length: %w", ports.ErrPasswordTooShort)
+// 	}
+// 	err := passwordvalidator.Validate(password, s.minPasswordEntropyBits)
+// 	if err != nil {
+// 		return fmt.Errorf("%w, validatePasswordSthregth, check password strength: %v", ports.ErrLowPasswordStrength, err)
+// 	}
+// 	return nil
+// }
 
 func (s *AuthService) hashPassword(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), s.bcryptCost)

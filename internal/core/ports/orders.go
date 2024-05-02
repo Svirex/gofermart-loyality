@@ -22,13 +22,14 @@ type UserOrder struct {
 }
 
 var ErrInvalidOrderNum = errors.New("invalid orders num")
+var ErrInternalError = errors.New("internal error")
 
 type OrdersService interface {
 	CreateOrder(ctx context.Context, uid int64, orderNum string) (Status, error)
 	GetOrders(ctx context.Context, uid int64) ([]domain.Order, error)
 }
 
-type OrderRepository interface {
+type OrdersRepository interface {
 	CreateOrder(ctx context.Context, uid int64, orderNum string) (*UserOrder, error)
 	GetOrders(ctx context.Context, uid int64) ([]domain.Order, error)
 }

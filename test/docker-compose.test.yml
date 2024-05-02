@@ -6,6 +6,7 @@ services:
       dockerfile: Dockerfile.tests
     depends_on:
       - db
+      - mock_accrual
     networks:
       - integration-tests
     volumes:
@@ -28,6 +29,20 @@ services:
     restart: always
     networks:
       - integration-tests
+  mock_accrual:
+    build:
+      context: .
+      dockerfile: mock_accrual/Dockerfile
+    depends_on:
+      - db
+    networks:
+      - integration-tests
+    volumes:
+      - type: bind
+        source: ../
+        target: /integration-test
+    expose:
+      - "3000"
 
 networks:
   integration-tests:

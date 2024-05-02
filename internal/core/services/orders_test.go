@@ -23,6 +23,16 @@ func TestCheckLunh(t *testing.T) {
 			err:    false,
 		},
 		{
+			number: "2634",
+			ok:     true,
+			err:    false,
+		},
+		{
+			number: "8334",
+			ok:     true,
+			err:    false,
+		},
+		{
 			number: "йо-хо-хо",
 			ok:     false,
 			err:    true,

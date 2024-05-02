@@ -33,15 +33,7 @@ func TestPasswordIsTooShort(t *testing.T) {
 	service := NewAuthTestService(t)
 
 	_, err := service.Register(context.Background(), "login", "pass")
-	require.ErrorIs(t, err, ports.ErrPasswordToShort)
-
-}
-
-func TestLowPasswordStrength(t *testing.T) {
-	service := NewAuthTestService(t)
-
-	_, err := service.Register(context.Background(), "login", "password")
-	require.ErrorIs(t, err, ports.ErrLowPasswordStrength)
+	require.ErrorIs(t, err, ports.ErrPasswordTooShort)
 
 }
 
@@ -58,4 +50,11 @@ func TestEmptyPasswordLogin(t *testing.T) {
 
 	_, err := service.Login(context.Background(), "login", "")
 	require.ErrorIs(t, err, ports.ErrEmptyPassword)
+}
+
+func TestPasswordTooLong(t *testing.T) {
+	service := NewAuthTestService(t)
+
+	_, err := service.Register(context.Background(), "svirex", "blablablablablablablablablablablablablablablablablablablablablablablablabla")
+	require.ErrorIs(t, err, ports.ErrPasswordTooLong)
 }
