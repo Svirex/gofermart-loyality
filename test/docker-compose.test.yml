@@ -14,7 +14,6 @@ services:
         source: ../
         target: /integration-test
     environment:
-      # DB_URL: host=localhost port=5432 user=root password=root dbname=testdb sslmode=disable
       DB_URL: user=root password=root host=db port=5432 dbname=testdb sslmode=disable
   db:
     image: postgres:16.2-alpine3.19

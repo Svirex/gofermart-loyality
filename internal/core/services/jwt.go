@@ -22,7 +22,7 @@ func buildJWTString(secretKey string, uid int64) (string, error) {
 	return tokenString, nil
 }
 
-func GetUserIDFromJWT(secretKey string, token string) (int64, error) {
+func getUserIDFromJWT(secretKey string, token string) (int64, error) {
 	claims := &Claims{}
 	_, err := jwt.ParseWithClaims(token, claims, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {

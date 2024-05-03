@@ -57,7 +57,7 @@ func TestGoodRegister(t *testing.T) {
 	require.NotEmpty(t, key)
 	require.NoError(t, err)
 
-	uid, err := GetUserIDFromJWT("fake_secret", key)
+	uid, err := getUserIDFromJWT("fake_secret", key)
 	require.NotEqual(t, int64(-1), uid)
 	require.NoError(t, err)
 

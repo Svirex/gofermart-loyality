@@ -39,7 +39,14 @@ type CheckAccrualService struct {
 	dbLoaderPause        time.Duration
 }
 
-func NewCheckAccrualService(dbpool *pgxpool.Pool, logger common.Logger, queueSize int, accrualAddr string, pauseBetweenRequests time.Duration, maxRunnedGenerators int32, dbLoaderPause time.Duration) (*CheckAccrualService, error) {
+func NewCheckAccrualService(dbpool *pgxpool.Pool,
+	logger common.Logger,
+	queueSize int,
+	accrualAddr string,
+	pauseBetweenRequests time.Duration,
+	maxRunnedGenerators int32,
+	dbLoaderPause time.Duration,
+) (*CheckAccrualService, error) {
 	return &CheckAccrualService{
 		dbpool:               dbpool,
 		stopCh:               make(chan struct{}),
@@ -288,30 +295,13 @@ func (service *CheckAccrualService) writeProcessed(ar *AccrualResponse) error {
 	if decimal.Decimal(ar.Accrual).IsZero() {
 		return nil
 	}
-	// trx, err := service.dbpool.BeginTx(context.Background(), pgx.TxOptions{})
-	// if err != nil {
-	// 	return fmt.Errorf("write processed, start transaction: %w", err)
-	// }
-	// defer trx.Rollback(context.Background())
 
-	// err = trx.QueryRow(context.Background(), "SELECT uid FROM orders WHERE order_num=$1 AND status!='PROCESSED';", ar.OrderNum).Scan(&uid)
-	// if err != nil {
-	// 	if errors.Is(err, pgx.ErrNoRows) {
-	// 		return nil
-	// 	}
-	// 	return fmt.Errorf("write processed, select uid: %w", err)
-	// }
-
-	service.logger.Error("SELECTED UID ", uid)
+	service.logger.Debug("SELECTED UID ", uid)
 
 	_, err = service.dbpool.Exec(context.Background(), "UPDATE balance SET current=current+$1 WHERE uid=$2;", decimal.Decimal(ar.Accrual).String(), uid)
 	if err != nil {
 		return fmt.Errorf("write processed, update: %w", err)
 	}
-	// err = trx.Commit(context.Background())
-	// if err != nil {
-	// 	return fmt.Errorf("write processed, commit: %w", err)
-	// }
 	return nil
 }
 

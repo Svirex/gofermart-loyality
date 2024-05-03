@@ -15,7 +15,7 @@ type AuthService struct {
 	minPasswordEntropyBits float64
 	minPasswordLength      int
 	bcryptCost             int
-	jwtSecretKet           string
+	jwtSecretKey           string
 }
 
 var _ ports.AuthService = (*AuthService)(nil)
@@ -27,7 +27,7 @@ func NewAuthService(repo ports.AuthRepository, minPasswordEntropyBits float64, m
 		minPasswordEntropyBits: minPasswordEntropyBits,
 		minPasswordLength:      minPasswordLength,
 		bcryptCost:             bcryptCost,
-		jwtSecretKet:           jwtSecretKey,
+		jwtSecretKey:           jwtSecretKey,
 	}, nil
 }
 
@@ -59,7 +59,7 @@ func (s *AuthService) Register(ctx context.Context, login, password string) (str
 		}
 		return "", fmt.Errorf("auth service register, create user: %w", err)
 	}
-	token, err := buildJWTString(s.jwtSecretKet, user.ID)
+	token, err := buildJWTString(s.jwtSecretKey, user.ID)
 	if err != nil {
 		return "", fmt.Errorf("auth service register, build jwt token: %w", err)
 	}
@@ -88,11 +88,15 @@ func (s *AuthService) Login(ctx context.Context, login, password string) (string
 		}
 		return "", fmt.Errorf("auth service login, compare hash and password: %w", err)
 	}
-	token, err := buildJWTString(s.jwtSecretKet, user.ID)
+	token, err := buildJWTString(s.jwtSecretKey, user.ID)
 	if err != nil {
 		return "", fmt.Errorf("auth service login, build jwt token: %w", err)
 	}
 	return token, nil
+}
+
+func (s *AuthService) GetUserGromJWT(ctx context.Context, jwt string) (int64, error) {
+	return getUserIDFromJWT(s.jwtSecretKey, jwt)
 }
 
 // func (s *AuthService) validatePasswordSthregth(password string) error {

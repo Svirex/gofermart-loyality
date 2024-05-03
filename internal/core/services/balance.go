@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	"github.com/Svirex/gofermart-loyality/internal/core/domain"
 	"github.com/Svirex/gofermart-loyality/internal/core/ports"
 )
 
@@ -18,6 +19,6 @@ func NewBalanceService(repository ports.BalanceRepository) *BalanceService {
 
 var _ ports.BalanceService = (*BalanceService)(nil)
 
-func (service *BalanceService) GetBalance(ctx context.Context, uid int64) (*ports.Balance, error) {
+func (service *BalanceService) GetBalance(ctx context.Context, uid int64) (*domain.Balance, error) {
 	return service.repository.GetBalance(ctx, uid)
 }

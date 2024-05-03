@@ -19,6 +19,7 @@ var ErrInvalidPassword = errors.New("invalid password")
 type AuthService interface {
 	Register(ctx context.Context, login, password string) (string, error)
 	Login(ctx context.Context, login, password string) (string, error)
+	GetUserGromJWT(ctx context.Context, jwt string) (int64, error)
 }
 
 type AuthRepository interface {

@@ -38,7 +38,7 @@ func (service *OrderService) CreateOrder(ctx context.Context, uid int64, orderNu
 	ok, err := checkLuhn(orderNum)
 	if err != nil {
 		service.logger.Errorf("order service, create order: %v", err)
-		return ports.Err, fmt.Errorf("order service, create order: %w", err)
+		return ports.Err, fmt.Errorf("%w: order service, create order: %v", ports.ErrInvalidOrderNum, err)
 	}
 	if !ok {
 		return ports.Err, ports.ErrInvalidOrderNum

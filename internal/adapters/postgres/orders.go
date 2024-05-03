@@ -55,18 +55,18 @@ func (repo *OrdersRepository) CreateOrder(ctx context.Context, uid int64, orderN
 func (repo *OrdersRepository) GetOrders(ctx context.Context, uid int64) ([]domain.Order, error) {
 	rows, _ := repo.db.Query(ctx, "SELECT order_num, status, accrual, uploaded_at FROM orders WHERE uid=$1 ORDER BY uploaded_at DESC;", uid)
 	if err := rows.Err(); err != nil {
-		repo.logger.Errorln("orders repo, get orders, select: ", err)
+		repo.logger.Errorln("orders repo, get orders, select: %v", err)
 		return nil, fmt.Errorf("orders repo, get orders, select: %w", err)
 	}
 	orders := make([]domain.Order, 0)
 	for rows.Next() {
 		if err := rows.Err(); err != nil {
-			repo.logger.Errorln("orders repo, get orders, next row: ", err)
+			repo.logger.Errorln("orders repo, get orders, next row: %v", err)
 			return nil, fmt.Errorf("orders repo, get orders, next row: %w", err)
 		}
 		order := domain.Order{}
 		if err := rows.Scan(&order.Number, &order.Status, &order.Accrual, &order.UploadedAt); err != nil {
-			repo.logger.Errorln("orders repo, get orders, next row, scan: ", err)
+			repo.logger.Errorln("orders repo, get orders, next row, scan: %v", err)
 			return nil, fmt.Errorf("orders repo, get orders, next row, scan: %w", err)
 		}
 		orders = append(orders, order)

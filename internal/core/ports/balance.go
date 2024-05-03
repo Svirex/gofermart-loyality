@@ -1,16 +1,15 @@
 package ports
 
-import "context"
+import (
+	"context"
 
-type Balance struct {
-	Current   float64 `json:"current"`
-	Withdrawn float64 `json:"withdrawn"`
-}
+	"github.com/Svirex/gofermart-loyality/internal/core/domain"
+)
 
 type BalanceService interface {
-	GetBalance(ctx context.Context, uid int64) (*Balance, error)
+	GetBalance(ctx context.Context, uid int64) (*domain.Balance, error)
 }
 
 type BalanceRepository interface {
-	GetBalance(ctx context.Context, uid int64) (*Balance, error)
+	GetBalance(ctx context.Context, uid int64) (*domain.Balance, error)
 }

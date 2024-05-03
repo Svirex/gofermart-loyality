@@ -2,19 +2,21 @@ package ports
 
 import (
 	"context"
-	"time"
+	"errors"
+
+	"github.com/Svirex/gofermart-loyality/internal/core/domain"
 )
 
-type WithdrawData struct {
-	OrderNum    string    `json:"order"`
-	Sum         float64   `json:"sum"`
-	ProcessedAt time.Time `json:"processed_at"`
-}
+var ErrNotEnoughMoney = errors.New("not enough money")
+var ErrDuplicateOrderNumber = errors.New("duplicate order number")
+var ErrSumIsNegative = errors.New("sum is negative")
 
 type WithdrawService interface {
-	Withdraw(ctx context.Context, uid int64, data *WithdrawData) error
+	Withdraw(ctx context.Context, uid int64, data *domain.WithdrawData) error
+	GetWithdrawals(ctx context.Context, uid int64) ([]*domain.WithdrawData, error)
 }
 
 type WithdrawRepository interface {
-	Withdraw(ctx context.Context, uid int64, data *WithdrawData) error
+	Withdraw(ctx context.Context, uid int64, data *domain.WithdrawData) error
+	GetWithdrawals(ctx context.Context, uid int64) ([]*domain.WithdrawData, error)
 }

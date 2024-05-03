@@ -1,10 +1,11 @@
-//go:build integration
-// +build integration
+//go:build integration || integration_postgres
+// +build integration integration_postgres
 
 package postgres
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"os"
 	"testing"
@@ -337,6 +338,306 @@ func TestBalanceGetBalanceForNewUser(t *testing.T) {
 
 	require.True(t, math.Abs(0.0-data.Current) < 0.000001)
 	require.True(t, math.Abs(0.0-data.Withdrawn) < 0.000001)
+
+	err = testdb.Truncate()
+	require.NoError(t, err)
+}
+
+func NewTestWithdrawRepository() *WithdrawRepository {
+	return NewWithdrawRepository(testdb.GetPool(), testdb.GetLogger())
+}
+
+func TestWithdrawNotEnoughForNewUser(t *testing.T) {
+	userRepo := NewAuthRepo()
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	user := &domain.User{
+		Login: "svirex",
+		Hash:  string(hash),
+	}
+	user, err = userRepo.CreateUser(context.Background(), user)
+	require.NoError(t, err)
+
+	repo := NewTestWithdrawRepository()
+
+	data := &domain.WithdrawData{
+		OrderNum: "2323424",
+		Sum:      500,
+	}
+
+	err = repo.Withdraw(context.Background(), user.ID, data)
+	require.ErrorIs(t, err, ports.ErrNotEnoughMoney)
+
+	err = testdb.Truncate()
+	require.NoError(t, err)
+}
+
+func TestWithdrawNotEnoughWithNonZeroBalance(t *testing.T) {
+	userRepo := NewAuthRepo()
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	user := &domain.User{
+		Login: "svirex",
+		Hash:  string(hash),
+	}
+	user, err = userRepo.CreateUser(context.Background(), user)
+	require.NoError(t, err)
+
+	_, err = testdb.GetPool().Exec(context.Background(), "UPDATE balance SET current=current+250 WHERE uid=$1;", user.ID)
+
+	repo := NewTestWithdrawRepository()
+
+	data := &domain.WithdrawData{
+		OrderNum: "2323424",
+		Sum:      500,
+	}
+
+	err = repo.Withdraw(context.Background(), user.ID, data)
+	require.ErrorIs(t, err, ports.ErrNotEnoughMoney)
+
+	err = testdb.Truncate()
+	require.NoError(t, err)
+}
+
+func TestWithdrawGood(t *testing.T) {
+	userRepo := NewAuthRepo()
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	user := &domain.User{
+		Login: "svirex",
+		Hash:  string(hash),
+	}
+	user, err = userRepo.CreateUser(context.Background(), user)
+	require.NoError(t, err)
+
+	_, err = testdb.GetPool().Exec(context.Background(), "UPDATE balance SET current=current+750 WHERE uid=$1;", user.ID)
+
+	repo := NewTestWithdrawRepository()
+
+	data := &domain.WithdrawData{
+		OrderNum: "2323424",
+		Sum:      500,
+	}
+
+	err = repo.Withdraw(context.Background(), user.ID, data)
+	require.NoError(t, err)
+
+	br := NewTestBalanceRepository()
+
+	d, err := br.GetBalance(context.Background(), user.ID)
+
+	require.True(t, math.Abs(250-d.Current) < 0.000001)
+	require.True(t, math.Abs(500-d.Withdrawn) < 0.000001)
+
+	err = testdb.Truncate()
+	require.NoError(t, err)
+}
+
+func TestWithdrawGoodWithdrawn(t *testing.T) {
+	userRepo := NewAuthRepo()
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	user := &domain.User{
+		Login: "svirex",
+		Hash:  string(hash),
+	}
+	user, err = userRepo.CreateUser(context.Background(), user)
+	require.NoError(t, err)
+
+	_, err = testdb.GetPool().Exec(context.Background(), "UPDATE balance SET current=current+750 WHERE uid=$1;", user.ID)
+
+	repo := NewTestWithdrawRepository()
+
+	br := NewTestBalanceRepository()
+
+	data := &domain.WithdrawData{
+		OrderNum: "2323424",
+		Sum:      100,
+	}
+
+	err = repo.Withdraw(context.Background(), user.ID, data)
+	require.NoError(t, err)
+
+	d, err := br.GetBalance(context.Background(), user.ID)
+
+	require.True(t, math.Abs(650-d.Current) < 0.000001)
+	require.True(t, math.Abs(100-d.Withdrawn) < 0.000001)
+
+	data1 := &domain.WithdrawData{
+		OrderNum: "23234245",
+		Sum:      50,
+	}
+
+	err = repo.Withdraw(context.Background(), user.ID, data1)
+	require.NoError(t, err)
+
+	d, err = br.GetBalance(context.Background(), user.ID)
+
+	require.True(t, math.Abs(600-d.Current) < 0.000001)
+	require.True(t, math.Abs(150-d.Withdrawn) < 0.000001)
+
+	data2 := &domain.WithdrawData{
+		OrderNum: "2323429",
+		Sum:      0.05,
+	}
+
+	err = repo.Withdraw(context.Background(), user.ID, data2)
+	require.NoError(t, err)
+
+	d, err = br.GetBalance(context.Background(), user.ID)
+	fmt.Println(d)
+	require.True(t, math.Abs(600-0.05-d.Current) < 0.000001)
+	require.True(t, math.Abs(150+0.05-d.Withdrawn) < 0.000001)
+
+	err = testdb.Truncate()
+	require.NoError(t, err)
+}
+
+func TestWithdrawNotChangeBalance(t *testing.T) {
+	userRepo := NewAuthRepo()
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	user := &domain.User{
+		Login: "svirex",
+		Hash:  string(hash),
+	}
+	user, err = userRepo.CreateUser(context.Background(), user)
+	require.NoError(t, err)
+
+	_, err = testdb.GetPool().Exec(context.Background(), "UPDATE balance SET current=current+750 WHERE uid=$1;", user.ID)
+
+	repo := NewTestWithdrawRepository()
+
+	br := NewTestBalanceRepository()
+
+	data := &domain.WithdrawData{
+		OrderNum: "2323424",
+		Sum:      1000,
+	}
+
+	err = repo.Withdraw(context.Background(), user.ID, data)
+	require.ErrorIs(t, err, ports.ErrNotEnoughMoney)
+
+	d, err := br.GetBalance(context.Background(), user.ID)
+
+	require.True(t, math.Abs(750-d.Current) < 0.000001)
+	require.True(t, math.Abs(0-d.Withdrawn) < 0.000001)
+
+	data1 := &domain.WithdrawData{
+		OrderNum: "2323424",
+		Sum:      50,
+	}
+
+	err = repo.Withdraw(context.Background(), user.ID, data1)
+	require.NoError(t, err)
+
+	d, err = br.GetBalance(context.Background(), user.ID)
+
+	require.True(t, math.Abs(700-d.Current) < 0.000001)
+	require.True(t, math.Abs(50-d.Withdrawn) < 0.000001)
+
+	data2 := &domain.WithdrawData{
+		OrderNum: "2323424",
+		Sum:      500,
+	}
+
+	err = repo.Withdraw(context.Background(), user.ID, data2)
+	require.ErrorIs(t, err, ports.ErrDuplicateOrderNumber)
+
+	d, err = br.GetBalance(context.Background(), user.ID)
+	fmt.Println(d)
+	require.True(t, math.Abs(700-d.Current) < 0.000001)
+	require.True(t, math.Abs(50-d.Withdrawn) < 0.000001)
+
+	err = testdb.Truncate()
+	require.NoError(t, err)
+}
+
+func TestWithdrawGetWithdrawals(t *testing.T) {
+	userRepo := NewAuthRepo()
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	user := &domain.User{
+		Login: "svirex",
+		Hash:  string(hash),
+	}
+	user, err = userRepo.CreateUser(context.Background(), user)
+	require.NoError(t, err)
+
+	_, err = testdb.GetPool().Exec(context.Background(), "UPDATE balance SET current=current+750 WHERE uid=$1;", user.ID)
+
+	repo := NewTestWithdrawRepository()
+
+	// br := NewTestBalanceRepository()
+
+	data := &domain.WithdrawData{
+		OrderNum: "2323424",
+		Sum:      20,
+	}
+
+	err = repo.Withdraw(context.Background(), user.ID, data)
+	require.NoError(t, err)
+
+	data1 := &domain.WithdrawData{
+		OrderNum: "23234245",
+		Sum:      50,
+	}
+
+	err = repo.Withdraw(context.Background(), user.ID, data1)
+	require.NoError(t, err)
+
+	data2 := &domain.WithdrawData{
+		OrderNum: "23234246",
+		Sum:      500,
+	}
+
+	err = repo.Withdraw(context.Background(), user.ID, data2)
+	require.NoError(t, err)
+
+	w, err := repo.GetWithdrawals(context.Background(), user.ID)
+	require.NoError(t, err)
+	require.NotNil(t, w)
+	require.Len(t, w, 3)
+
+	require.Equal(t, "23234246", w[0].OrderNum)
+	require.True(t, math.Abs(500-w[0].Sum) < 0.000001)
+
+	require.Equal(t, "23234245", w[1].OrderNum)
+	require.True(t, math.Abs(50-w[1].Sum) < 0.000001)
+
+	require.Equal(t, "2323424", w[2].OrderNum)
+	require.True(t, math.Abs(20-w[2].Sum) < 0.000001)
+
+	err = testdb.Truncate()
+	require.NoError(t, err)
+}
+
+func TestWithdrawGetWithdrawalsEmpty(t *testing.T) {
+	userRepo := NewAuthRepo()
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	user := &domain.User{
+		Login: "svirex",
+		Hash:  string(hash),
+	}
+	user, err = userRepo.CreateUser(context.Background(), user)
+	require.NoError(t, err)
+
+	// _, err = testdb.GetPool().Exec(context.Background(), "UPDATE balance SET current=current+750 WHERE uid=$1;", user.ID)
+
+	repo := NewTestWithdrawRepository()
+
+	w, err := repo.GetWithdrawals(context.Background(), user.ID)
+	require.NoError(t, err)
+	require.NotNil(t, w)
+	require.Len(t, w, 0)
 
 	err = testdb.Truncate()
 	require.NoError(t, err)
