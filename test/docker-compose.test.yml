@@ -12,7 +12,7 @@ services:
     volumes:
       - type: bind
         source: ../
-        target: /integration-test
+        target: /app
     environment:
       DB_URL: user=root password=root host=db port=5432 dbname=testdb sslmode=disable
   db:
@@ -39,7 +39,7 @@ services:
     volumes:
       - type: bind
         source: ../
-        target: /integration-test
+        target: /app
     expose:
       - "3000"
 

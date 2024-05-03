@@ -1,5 +1,5 @@
 FROM golang:alpine3.19 AS src
 
-WORKDIR /integration-test
+WORKDIR /app
 
 CMD go clean -testcache && CGO_ENABLED=0 go test -tags=integration -p 1 -v ./...

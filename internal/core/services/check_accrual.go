@@ -31,7 +31,7 @@ type CheckAccrualService struct {
 	pauseBetweenRequests time.Duration
 	generatorsWG         sync.WaitGroup
 	checkerEndCh         chan struct{}
-	dbWriterEndCh        chan struct{}
+	// dbWriterEndCh        chan struct{}
 	errorLogEndCh        chan struct{}
 	dbLoaderEndCh        chan struct{}
 	currentGeneratorsRun atomic.Int32
@@ -58,11 +58,11 @@ func NewCheckAccrualService(dbpool *pgxpool.Pool,
 		accrualResponseCh:    make(chan *AccrualResponse, queueSize),
 		pauseBetweenRequests: pauseBetweenRequests,
 		checkerEndCh:         make(chan struct{}),
-		dbWriterEndCh:        make(chan struct{}),
-		errorLogEndCh:        make(chan struct{}),
-		dbLoaderEndCh:        make(chan struct{}),
-		maxRunnedGenerators:  maxRunnedGenerators,
-		dbLoaderPause:        dbLoaderPause,
+		// dbWriterEndCh:        make(chan struct{}),
+		errorLogEndCh:       make(chan struct{}),
+		dbLoaderEndCh:       make(chan struct{}),
+		maxRunnedGenerators: maxRunnedGenerators,
+		dbLoaderPause:       dbLoaderPause,
 	}, nil
 }
 
@@ -73,7 +73,7 @@ func (service *CheckAccrualService) Start() {
 	service.logger.Debug("START CHECK ACCRUAL SERVICE")
 	go service.dbLoader()
 	go service.checker()
-	go service.dbWriter()
+	// go service.dbWriter()
 	go service.errorLog()
 }
 
@@ -184,7 +184,8 @@ func (service *CheckAccrualService) checker() {
 					break
 				}
 				response.Body.Close()
-				service.accrualResponseCh <- data
+				// service.accrualResponseCh <- data
+				service.writeData(data)
 
 			} else if response.StatusCode == http.StatusNoContent {
 				service.orderNumsCh <- orderNum // чтобы не упустить из обработки orderNum
@@ -230,42 +231,70 @@ func (service *CheckAccrualService) checker() {
 
 }
 
-func (service *CheckAccrualService) dbWriter() {
-	for {
-		select {
-		case <-service.stopCh:
-			close(service.dbWriterEndCh)
-			service.logger.Debugln("CLOSE CHANNEL dbWriterEndCh")
-			return
-		case ar := <-service.accrualResponseCh:
-			service.logger.Debugln("service.accrualResponseCh", ar, decimal.Decimal(ar.Accrual).String())
-			switch ar.Status {
-			case Registered:
-				service.orderNumsCh <- ar.OrderNum
-			case Invalid:
-				service.logger.Debugln("INVALID ORDER_NUM", ar.OrderNum, ar)
-				err := service.writeInvalid(ar.OrderNum)
-				if err != nil {
-					service.errorCh <- fmt.Errorf("dbWriter, invalid: %w", err)
-					service.accrualResponseCh <- ar // чтобы попробовать записать ещё раз
-				}
-			case Processing:
-				err := service.writeProcessing(ar.OrderNum)
-				if err != nil {
-					service.errorCh <- fmt.Errorf("dbWriter, processing: %w", err)
-					service.accrualResponseCh <- ar // чтобы попробовать записать ещё раз
-				}
-				service.orderNumsCh <- ar.OrderNum
-			case Processed:
-				err := service.writeProcessed(ar)
-				if err != nil {
-					service.errorCh <- fmt.Errorf("dbWriter, procedd: %w", err)
-					service.accrualResponseCh <- ar // чтобы попробовать записать ещё раз
-				}
-			}
+func (service *CheckAccrualService) writeData(ar *AccrualResponse) {
+	service.logger.Debugln("service.accrualResponseCh", ar, decimal.Decimal(ar.Accrual).String())
+	switch ar.Status {
+	case Registered:
+		service.orderNumsCh <- ar.OrderNum
+	case Invalid:
+		service.logger.Debugln("INVALID ORDER_NUM", ar.OrderNum, ar)
+		err := service.writeInvalid(ar.OrderNum)
+		if err != nil {
+			service.errorCh <- fmt.Errorf("dbWriter, invalid: %w", err)
+			// service.accrualResponseCh <- ar // чтобы попробовать записать ещё раз
+		}
+	case Processing:
+		err := service.writeProcessing(ar.OrderNum)
+		if err != nil {
+			service.errorCh <- fmt.Errorf("dbWriter, processing: %w", err)
+			// service.accrualResponseCh <- ar // чтобы попробовать записать ещё раз
+		}
+		service.orderNumsCh <- ar.OrderNum
+	case Processed:
+		err := service.writeProcessed(ar)
+		if err != nil {
+			service.errorCh <- fmt.Errorf("dbWriter, procedd: %w", err)
+			// service.accrualResponseCh <- ar // чтобы попробовать записать ещё раз
 		}
 	}
 }
+
+// func (service *CheckAccrualService) dbWriter() {
+// 	for {
+// 		select {
+// 		case <-service.stopCh:
+// 			close(service.dbWriterEndCh)
+// 			service.logger.Debugln("CLOSE CHANNEL dbWriterEndCh")
+// 			return
+// 		case ar := <-service.accrualResponseCh:
+// 			service.logger.Debugln("service.accrualResponseCh", ar, decimal.Decimal(ar.Accrual).String())
+// 			switch ar.Status {
+// 			case Registered:
+// 				service.orderNumsCh <- ar.OrderNum
+// 			case Invalid:
+// 				service.logger.Debugln("INVALID ORDER_NUM", ar.OrderNum, ar)
+// 				err := service.writeInvalid(ar.OrderNum)
+// 				if err != nil {
+// 					service.errorCh <- fmt.Errorf("dbWriter, invalid: %w", err)
+// 					service.accrualResponseCh <- ar // чтобы попробовать записать ещё раз
+// 				}
+// 			case Processing:
+// 				err := service.writeProcessing(ar.OrderNum)
+// 				if err != nil {
+// 					service.errorCh <- fmt.Errorf("dbWriter, processing: %w", err)
+// 					service.accrualResponseCh <- ar // чтобы попробовать записать ещё раз
+// 				}
+// 				service.orderNumsCh <- ar.OrderNum
+// 			case Processed:
+// 				err := service.writeProcessed(ar)
+// 				if err != nil {
+// 					service.errorCh <- fmt.Errorf("dbWriter, procedd: %w", err)
+// 					service.accrualResponseCh <- ar // чтобы попробовать записать ещё раз
+// 				}
+// 			}
+// 		}
+// 	}
+// }
 
 func (service *CheckAccrualService) writeInvalid(orderNum string) error {
 	_, err := service.dbpool.Exec(context.Background(), "UPDATE orders SET status='INVALID' WHERE order_num=$1;", orderNum)
@@ -328,7 +357,7 @@ func (service *CheckAccrualService) Shutdown() {
 	service.generatorsWG.Wait()
 	<-service.errorLogEndCh
 	<-service.checkerEndCh
-	<-service.dbWriterEndCh
+	// <-service.dbWriterEndCh
 	<-service.dbLoaderEndCh
 	close(service.orderNumsCh)
 	service.logger.Debugln("CLOSE CHANNEL orderNumsCh")

@@ -58,7 +58,7 @@ func initMigration() {
 		logger.Fatalf("create instance db for migrate: %v", "err", err)
 	}
 	migration, err = migrate.NewWithDatabaseInstance(
-		"file:///integration-test/migrations", "postgres", driver)
+		"file:///app/migrations", "postgres", driver)
 	if err != nil {
 		logger.Fatalf("create migrate: %v", "err", err)
 	}
