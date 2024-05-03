@@ -34,7 +34,7 @@ func main() {
 	}
 
 	config := zap.Config{
-		Level:            zap.NewAtomicLevelAt(zapcore.InfoLevel),
+		Level:            zap.NewAtomicLevelAt(zapcore.DebugLevel),
 		Development:      false,
 		Encoding:         "json",
 		EncoderConfig:    zap.NewProductionEncoderConfig(),

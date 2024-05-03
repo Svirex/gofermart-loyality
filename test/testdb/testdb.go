@@ -77,15 +77,15 @@ func Init() {
 }
 
 func Connect() {
-	var db_url string
+	var dbURL string
 	var exists bool
-	if db_url, exists = os.LookupEnv("DB_URL"); !exists {
+	if dbURL, exists = os.LookupEnv("DB_URL"); !exists {
 		log.Fatalf("connect string DB_URL not exists")
 	}
 	var err error
-	dbpool, err = pgxpool.New(context.Background(), db_url)
+	dbpool, err = pgxpool.New(context.Background(), dbURL)
 	if err != nil {
-		log.Fatalf("create new pgxpool: %s, err: %v", db_url, err)
+		log.Fatalf("create new pgxpool: %s, err: %v", dbURL, err)
 	}
 	err = dbpool.Ping(context.Background())
 	if err != nil {
