@@ -87,7 +87,7 @@ func main() {
 	}
 
 	ordersRepo := adapterspg.NewOrdersRepository(dbpool, logger)
-	orders, err := services.NewOrderService(dbpool, ordersRepo, logger, 20, cfg.AccrualSystemAddress, 1*time.Second, 20, 2*time.Second)
+	orders, err := services.NewOrderService(dbpool, ordersRepo, logger, 20, cfg.AccrualSystemAddress, 100*time.Millisecond, 20, 2*time.Second)
 	if err != nil {
 		logger.Fatalf("orders service create: ", err)
 	}
