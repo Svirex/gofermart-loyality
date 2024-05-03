@@ -54,6 +54,15 @@ func main() {
 			}
 			`, number)
 			w.Write([]byte(s))
+		} else if number == "3511871356" {
+			s := fmt.Sprintf(`
+			{
+				"order": "%s",
+				"status": "PROCESSED",
+				"accrual": 729.98
+			}
+			`, number)
+			w.Write([]byte(s))
 		} else {
 			s := fmt.Sprintf(`
 		{

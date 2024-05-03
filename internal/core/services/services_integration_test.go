@@ -451,3 +451,68 @@ func TestCheckAccrualProcessed(t *testing.T) {
 	err = testdb.Truncate()
 	require.NoError(t, err)
 }
+
+func TestCheckAccrualProcessed2(t *testing.T) {
+	userRepo := postgres.NewAuthRepository(testdb.GetPool())
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	user := &domain.User{
+		Login: "svirex",
+		Hash:  string(hash),
+	}
+	user, err = userRepo.CreateUser(context.Background(), user)
+	require.NoError(t, err)
+
+	service := NewOrdersTestService(t)
+
+	result, err := service.CreateOrder(context.Background(), int64(user.ID), "3511871356")
+	require.NotNil(t, result)
+	require.NoError(t, err)
+
+	time.Sleep(100 * time.Millisecond)
+
+	bs := NewTestBalanceService()
+	balance, err := bs.GetBalance(context.Background(), user.ID)
+	require.NoError(t, err)
+
+	fmt.Println(balance)
+
+	require.True(t, math.Abs(729.98-balance.Current) < 1e-9)
+	require.True(t, math.Abs(0.0-balance.Withdrawn) < 1e-9)
+
+	service.Shutdown()
+	err = testdb.Truncate()
+	require.NoError(t, err)
+}
+
+func TestGetOrders(t *testing.T) {
+	userRepo := postgres.NewAuthRepository(testdb.GetPool())
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	user := &domain.User{
+		Login: "svirex",
+		Hash:  string(hash),
+	}
+	user, err = userRepo.CreateUser(context.Background(), user)
+	require.NoError(t, err)
+
+	service := NewOrdersTestService(t)
+
+	result, err := service.CreateOrder(context.Background(), int64(user.ID), "3511871356")
+	require.NotNil(t, result)
+	require.NoError(t, err)
+
+	time.Sleep(100 * time.Millisecond)
+
+	orders, err := service.GetOrders(context.Background(), user.ID)
+	require.NoError(t, err)
+	require.Len(t, orders, 1)
+
+	require.True(t, math.Abs(729.98-orders[0].Accrual) < 1e-9)
+
+	service.Shutdown()
+	err = testdb.Truncate()
+	require.NoError(t, err)
+}

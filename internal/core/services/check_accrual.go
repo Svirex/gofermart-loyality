@@ -314,7 +314,7 @@ func (service *CheckAccrualService) writeProcessing(orderNum string) error {
 
 func (service *CheckAccrualService) writeProcessed(ar *AccrualResponse) error {
 	var uid int64
-	err := service.dbpool.QueryRow(context.Background(), "UPDATE orders SET status='PROCESSED' WHERE order_num=$1 AND status!='PROCESSED' RETURNING uid;", ar.OrderNum).Scan(&uid)
+	err := service.dbpool.QueryRow(context.Background(), "UPDATE orders SET status='PROCESSED', accrual=$2 WHERE order_num=$1 AND status!='PROCESSED' RETURNING uid;", ar.OrderNum, decimal.Decimal(ar.Accrual).String()).Scan(&uid)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil
