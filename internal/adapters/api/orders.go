@@ -79,5 +79,6 @@ func (api *API) GetOrders(response http.ResponseWriter, request *http.Request) {
 		response.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	response.Header().Add("Content-Type", "application/json")
 	response.Write(data)
 }
