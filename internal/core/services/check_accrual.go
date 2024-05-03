@@ -238,7 +238,7 @@ func (service *CheckAccrualService) dbWriter() {
 			service.logger.Debugln("CLOSE CHANNEL dbWriterEndCh")
 			return
 		case ar := <-service.accrualResponseCh:
-			service.logger.Debugln("service.accrualResponseCh", ar)
+			service.logger.Debugln("service.accrualResponseCh", ar, decimal.Decimal(ar.Accrual).String())
 			switch ar.Status {
 			case Registered:
 				service.orderNumsCh <- ar.OrderNum
